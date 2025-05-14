@@ -1,6 +1,7 @@
 import os
 import random
 import smtplib
+import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -76,12 +77,74 @@ def send_email(subject, content):
     except Exception as e:
         print(f"邮件发送失败: {str(e)}")
 
+def save_recommended_numbers(lottery_type, numbers, analysis):
+    """保存推荐号码到文件"""
+    today = datetime.now()
+    month = today.strftime('%Y-%m')
+    data = {
+        'date': today.strftime('%Y-%m-%d'),
+        'lottery_type': lottery_type,
+        'numbers': numbers,
+        'analysis': analysis
+    }
+    
+    # 确保data目录存在
+    os.makedirs('data', exist_ok=True)
+    
+    # 按月保存到文件
+    filename = f'data/recommended_numbers_{month}.json'
+    
+    # 读取现有数据（如果存在）
+    existing_data = {}
+    if os.path.exists(filename):
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                existing_data = json.load(f)
+        except json.JSONDecodeError:
+            existing_data = {}
+    
+    # 更新当天的数据
+    existing_data[today.strftime('%Y-%m-%d')] = data
+    
+    # 保存更新后的数据
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(existing_data, f, ensure_ascii=False, indent=2)
+    print(f"推荐号码已保存到 {filename}")
+
+def get_recommended_numbers(lottery_type):
+    """获取今日推荐号码"""
+    today = datetime.now()
+    month = today.strftime('%Y-%m')
+    filename = f'data/recommended_numbers_{month}.json'
+    
+    if os.path.exists(filename):
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                monthly_data = json.load(f)
+                today_str = today.strftime('%Y-%m-%d')
+                if today_str in monthly_data:
+                    data = monthly_data[today_str]
+                    if data['lottery_type'] == lottery_type:
+                        return data['numbers'], data['analysis']
+        except json.JSONDecodeError:
+            print(f"读取文件 {filename} 失败")
+    
+    return None, None
+
 def main():
     print("开始生成推荐号码...")
     lottery_type = get_lottery_type()
     print(f"今日开奖类型：{lottery_type}")
     
-    numbers, analysis = generate_numbers(lottery_type)
+    # 检查是否已有今日推荐号码
+    numbers, analysis = get_recommended_numbers(lottery_type)
+    
+    if numbers is None:
+        # 如果没有今日推荐号码，则生成新的
+        numbers, analysis = generate_numbers(lottery_type)
+        # 保存推荐号码
+        save_recommended_numbers(lottery_type, numbers, analysis)
+    
     print(f"\n推荐号码：\n{numbers}")
     
     # 构建邮件内容

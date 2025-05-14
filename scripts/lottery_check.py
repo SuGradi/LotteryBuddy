@@ -2,10 +2,11 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import smtplib
+import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from lottery_recommendation import generate_numbers
+from lottery_recommendation import generate_numbers, get_recommended_numbers
 from email.utils import formataddr
 from email.header import Header
 
@@ -168,8 +169,13 @@ def main():
     print("开始执行开奖查询...")
     lottery_type = get_lottery_type()
     
-    # 获取推荐号码
-    recommended_numbers, analysis = generate_numbers(lottery_type)
+    # 获取今日推荐号码
+    recommended_numbers, analysis = get_recommended_numbers(lottery_type)
+    
+    if recommended_numbers is None:
+        print("未找到今日推荐号码，请先运行推荐程序")
+        return
+    
     print(f"\n今日推荐号码：\n{recommended_numbers}")
     
     # 获取开奖结果
