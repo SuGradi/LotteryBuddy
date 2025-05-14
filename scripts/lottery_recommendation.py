@@ -44,8 +44,8 @@ def send_email(subject, content):
     msg.attach(MIMEText(content, 'plain'))
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
+        # 使用QQ邮箱的SMTP服务器
+        server = smtplib.SMTP_SSL('smtp.qq.com', 465)
         server.login(email_user, email_password)
         server.send_message(msg)
         server.quit()
