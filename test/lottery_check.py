@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-import time
 
 def get_lottery_type():
     """判断今日开奖类型"""
@@ -19,18 +18,18 @@ def get_lottery_result(lottery_type):
     try:
         if lottery_type == "大乐透":
             url = "https://datachart.500.com/dlt/history/newinc/history.php"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
         else:
             url = "https://datachart.500.com/ssq/history/newinc/history.php"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+            
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
         print(f"正在获取{lottery_type}开奖结果，URL: {url}")
         response = requests.get(url, headers=headers, timeout=10)
         response.encoding = 'gb2312'  # 500彩票网使用gb2312编码
         print(f"响应状态码: {response.status_code}")
+        
         if response.status_code != 200:
             print(f"请求失败，状态码: {response.status_code}")
             return None
@@ -70,16 +69,6 @@ def get_lottery_result(lottery_type):
         print(f"获取开奖结果失败: {str(e)}")
         return None
 
-def fetch_and_print_html():
-    url = "https://datachart.500.com/dlt/history/newinc/history.php"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    response = requests.get(url, headers=headers, timeout=10)
-    response.encoding = 'gb2312'  # 500彩票网使用gb2312编码
-    print("大乐透页面源码前2000字符：\n")
-    print(response.text[:2000])
-
 def main():
     print("开始执行开奖查询...")
     lottery_type = get_lottery_type()
@@ -92,8 +81,6 @@ def main():
         print(f"\n今日{lottery_type}开奖结果获取失败")
     
     print("\n程序执行完成")
-
-    fetch_and_print_html()
 
 if __name__ == "__main__":
     main() 
