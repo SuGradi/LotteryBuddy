@@ -146,7 +146,7 @@ def send_email(subject, content):
     recipient_email = os.getenv('RECIPIENT_EMAIL')
 
     msg = MIMEMultipart()
-    msg['From'] = email_user
+    msg['From'] = formataddr((str(Header('【来彩助手】', 'utf-8')), email_user))
     msg['To'] = recipient_email
     msg['Subject'] = subject
 
@@ -167,7 +167,7 @@ def main():
     lottery_type = get_lottery_type()
     
     # 获取推荐号码
-    recommended_numbers = generate_numbers(lottery_type)
+    recommended_numbers, analysis = generate_numbers(lottery_type)
     print(f"\n今日推荐号码：\n{recommended_numbers}")
     
     # 获取开奖结果
@@ -197,23 +197,11 @@ def main():
         print(f"\n今日{lottery_type}开奖结果：")
         print(' '.join(winning_numbers))
         print(f"\n{result}")
+        
+        # 发送邮件
+        send_email(subject, content)
     else:
-        subject = f"今日{lottery_type}开奖结果获取失败"
-        content = f"""
-        您好！
-
-        很抱歉，今日{lottery_type}开奖结果获取失败。
-        请手动查看开奖结果。
-
-        您的推荐号码：
-        {recommended_numbers}
-
-        祝您中奖！
-        """
-        print(f"\n今日{lottery_type}开奖结果获取失败")
-    
-    send_email(subject, content)
-    print("\n程序执行完成")
+        print("无法获取开奖结果")
 
 def format_number_comparison(lottery_type, recommended_numbers, winning_numbers):
     """格式化号码对比信息"""

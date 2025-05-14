@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from email.header import Header
 from email.utils import formataddr
+from history_analyze import fetch_dlt_history, fetch_ssq_history, analyze_hot_cold
 
 def get_lottery_type():
     """判断今日开奖类型"""
@@ -22,15 +23,35 @@ def get_lottery_type():
 def generate_numbers(lottery_type):
     """生成推荐号码"""
     if lottery_type == "大乐透":
-        # 前区5个号码(1-35)，后区2个号码(1-12)
-        front_numbers = sorted(random.sample(range(1, 36), 5))
-        back_numbers = sorted(random.sample(range(1, 13), 2))
-        return f"前区：{', '.join(map(str, front_numbers))}，后区：{', '.join(map(str, back_numbers))}"
+        # 获取历史数据并分析
+        front_all, back_all = fetch_dlt_history(100)
+        hot_f, cold_f, rec_f = analyze_hot_cold(front_all, 3, 2, 5)
+        hot_b, cold_b, rec_b = analyze_hot_cold(back_all, 1, 1, 2)
+        
+        # 使用分析结果生成号码
+        front_numbers = rec_f
+        back_numbers = rec_b
+        return f"前区：{', '.join(map(str, front_numbers))}，后区：{', '.join(map(str, back_numbers))}", {
+            'hot_front': hot_f,
+            'cold_front': cold_f,
+            'hot_back': hot_b,
+            'cold_back': cold_b
+        }
     else:
-        # 双色球：6个红球(1-33)，1个蓝球(1-16)
-        red_numbers = sorted(random.sample(range(1, 34), 6))
-        blue_number = random.randint(1, 16)
-        return f"红球：{', '.join(map(str, red_numbers))}，蓝球：{blue_number}"
+        # 获取历史数据并分析
+        red_all, blue_all = fetch_ssq_history(100)
+        hot_r, cold_r, rec_r = analyze_hot_cold(red_all, 4, 2, 6)
+        hot_b, cold_b, rec_b = analyze_hot_cold(blue_all, 1, 0, 1)
+        
+        # 使用分析结果生成号码
+        red_numbers = rec_r
+        blue_number = rec_b[0] if rec_b else random.randint(1, 16)
+        return f"红球：{', '.join(map(str, red_numbers))}，蓝球：{blue_number}", {
+            'hot_red': hot_r,
+            'cold_red': cold_r,
+            'hot_blue': hot_b,
+            'cold_blue': cold_b
+        }
 
 def send_email(subject, content):
     """发送邮件"""
@@ -39,7 +60,7 @@ def send_email(subject, content):
     recipient_email = os.getenv('RECIPIENT_EMAIL')
 
     msg = MIMEMultipart()
-    msg['From'] = formataddr((str(Header('【彩票助手】', 'utf-8')), email_user))
+    msg['From'] = formataddr((str(Header('【来彩助手】', 'utf-8')), email_user))
     msg['To'] = recipient_email
     msg['Subject'] = subject
 
@@ -60,18 +81,40 @@ def main():
     lottery_type = get_lottery_type()
     print(f"今日开奖类型：{lottery_type}")
     
-    numbers = generate_numbers(lottery_type)
+    numbers, analysis = generate_numbers(lottery_type)
     print(f"\n推荐号码：\n{numbers}")
     
-    subject = f"今日{lottery_type}智能推荐号码"
+    # 构建邮件内容
     content = f"""
     您好！
 
     今日{lottery_type}推荐号码：
     {numbers}
 
+    历史数据分析（最近100期）：
+    """
+    
+    if lottery_type == "大乐透":
+        content += f"""
+    前区热号（出现频率最高的号码）：{', '.join(map(str, analysis['hot_front']))}
+    前区冷号（出现频率最低的号码）：{', '.join(map(str, analysis['cold_front']))}
+    后区热号：{', '.join(map(str, analysis['hot_back']))}
+    后区冷号：{', '.join(map(str, analysis['cold_back']))}
+    """
+    else:
+        content += f"""
+    红球热号（出现频率最高的号码）：{', '.join(map(str, analysis['hot_red']))}
+    红球冷号（出现频率最低的号码）：{', '.join(map(str, analysis['cold_red']))}
+    蓝球热号：{', '.join(map(str, analysis['hot_blue']))}
+    蓝球冷号：{', '.join(map(str, analysis['cold_blue']))}
+    """
+    
+    content += """
+    注：推荐号码基于历史数据分析，仅供参考。
     祝您好运！
     """
+    
+    subject = f"今日{lottery_type}智能推荐号码"
     
     print("\n正在发送邮件...")
     send_email(subject, content)
