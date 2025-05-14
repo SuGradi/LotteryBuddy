@@ -6,8 +6,6 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
-from email.header import Header
-from email.utils import formataddr
 
 def get_lottery_type():
     """判断今日开奖类型"""
@@ -39,7 +37,7 @@ def send_email(subject, content):
     recipient_email = os.getenv('RECIPIENT_EMAIL')
 
     msg = MIMEMultipart()
-    msg['From'] = formataddr((str(Header('【彩票助手】', 'utf-8')), email_user))
+    msg['From'] = email_user
     msg['To'] = recipient_email
     msg['Subject'] = subject
 
@@ -56,14 +54,10 @@ def send_email(subject, content):
         print(f"邮件发送失败: {str(e)}")
 
 def main():
-    print("开始生成推荐号码...")
     lottery_type = get_lottery_type()
-    print(f"今日开奖类型：{lottery_type}")
-    
     numbers = generate_numbers(lottery_type)
-    print(f"\n推荐号码：\n{numbers}")
     
-    subject = f"今日{lottery_type}智能推荐号码"
+    subject = f"今日{lottery_type}推荐号码"
     content = f"""
     您好！
 
@@ -73,9 +67,7 @@ def main():
     祝您好运！
     """
     
-    print("\n正在发送邮件...")
     send_email(subject, content)
-    print("程序执行完成")
 
 if __name__ == "__main__":
     main() 
