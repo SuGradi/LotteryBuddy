@@ -6,6 +6,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from lottery_recommendation import generate_numbers
+from email.utils import formataddr
+from email.header import Header
 
 def get_lottery_type():
     """判断今日开奖类型"""
