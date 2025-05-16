@@ -18,7 +18,7 @@
    - `EMAIL_USER`: 发件人邮箱地址
    - `EMAIL_PASSWORD`: 邮箱授权码（QQ邮箱使用授权码）
    - `RECIPIENT_EMAIL`: 收件人邮箱地址
-   - `GITHUB_TOKEN`: GitHub Personal Access Token（需要有 repo 权限）
+   - `LOTTERY_TOKEN`: GitHub Personal Access Token（需要有 repo 权限）
 
 3. 修改 GitHub Actions 工作流文件中的仓库信息：
    - 在 `.github/workflows/lottery.yml` 中设置正确的仓库名称
@@ -29,8 +29,8 @@
 
 ## 运行时间
 
-- 推荐号码：每天早上9点（北京时间）
-- 开奖检查：每天晚上21点（北京时间）
+- 推荐号码：每天早上10点（北京时间）
+- 开奖检查：每天晚上22点（北京时间）
 
 ## 数据存储
 
@@ -43,7 +43,7 @@
 如果需要手动运行程序，可以：
 
 1. 在 GitHub 仓库的 Actions 标签页中
-2. 选择 "Lottery Recommendation and Check" 工作流
+2. 选择 "彩票推荐和开奖通知" 工作流
 3. 点击 "Run workflow" 按钮
 
 ## 注意事项
