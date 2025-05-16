@@ -78,9 +78,8 @@ def send_email(subject, content):
         print(f"邮件发送失败: {str(e)}")
 
 def save_recommended_numbers(lottery_type, numbers, analysis):
-    """保存推荐号码到文件和环境变量"""
+    """保存推荐号码到环境变量"""
     today = datetime.now()
-    month = today.strftime('%Y-%m')
     data = {
         'date': today.strftime('%Y-%m-%d'),
         'lottery_type': lottery_type,
@@ -90,35 +89,11 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
     
     # 保存到环境变量
     os.environ['RECOMMENDED_NUMBERS'] = json.dumps(data, ensure_ascii=False)
-    
-    # 确保data目录存在
-    os.makedirs('data', exist_ok=True)
-    
-    # 按月保存到文件（作为备份）
-    filename = f'data/recommended_numbers_{month}.json'
-    
-    # 读取现有数据（如果存在）
-    existing_data = {}
-    if os.path.exists(filename):
-        try:
-            with open(filename, 'r', encoding='utf-8') as f:
-                existing_data = json.load(f)
-        except json.JSONDecodeError:
-            existing_data = {}
-    
-    # 更新当天的数据
-    existing_data[today.strftime('%Y-%m-%d')] = data
-    
-    # 保存更新后的数据
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(existing_data, f, ensure_ascii=False, indent=2)
-    print(f"推荐号码已保存到 {filename}")
+    print("推荐号码已保存到环境变量")
 
 def get_recommended_numbers(lottery_type):
     """获取今日推荐号码"""
-    today = datetime.now()
-    
-    # 首先尝试从环境变量获取
+    # 从环境变量获取
     if 'RECOMMENDED_NUMBERS' in os.environ:
         try:
             data = json.loads(os.environ['RECOMMENDED_NUMBERS'])
@@ -126,22 +101,6 @@ def get_recommended_numbers(lottery_type):
                 return data['numbers'], data['analysis']
         except json.JSONDecodeError:
             print("环境变量中的推荐号码格式错误")
-    
-    # 如果环境变量中没有，尝试从文件读取
-    month = today.strftime('%Y-%m')
-    filename = f'data/recommended_numbers_{month}.json'
-    
-    if os.path.exists(filename):
-        try:
-            with open(filename, 'r', encoding='utf-8') as f:
-                monthly_data = json.load(f)
-                today_str = today.strftime('%Y-%m-%d')
-                if today_str in monthly_data:
-                    data = monthly_data[today_str]
-                    if data['lottery_type'] == lottery_type:
-                        return data['numbers'], data['analysis']
-        except json.JSONDecodeError:
-            print(f"读取文件 {filename} 失败")
     
     return None, None
 

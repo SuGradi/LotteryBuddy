@@ -25,20 +25,14 @@ jobs:
           pip install -r requirements.txt
           
       - name: Run recommendation
+        id: save_numbers
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
         run: |
           python scripts/lottery_recommendation.py
-          
-      - name: Save recommended numbers
-        id: save_numbers
-        run: |
-          if [ -f "data/recommended_numbers_$(date +%Y-%m).json" ]; then
-            numbers=$(cat data/recommended_numbers_$(date +%Y-%m).json)
-            echo "numbers=$numbers" >> $GITHUB_OUTPUT
-          fi
+          echo "numbers=$RECOMMENDED_NUMBERS" >> $GITHUB_OUTPUT
 
   check:
     needs: recommend
