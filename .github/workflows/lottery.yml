@@ -32,7 +32,7 @@ jobs:
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
         run: |
           python scripts/lottery_recommendation.py
-          echo "numbers=$RECOMMENDED_NUMBERS" >> $GITHUB_OUTPUT
+          echo "numbers='$RECOMMENDED_NUMBERS'" >> $GITHUB_OUTPUT
 
   check:
     needs: recommend
@@ -57,4 +57,5 @@ jobs:
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
           RECOMMENDED_NUMBERS: ${{ needs.recommend.outputs.recommended_numbers }}
         run: |
+          echo "Recommended numbers: $RECOMMENDED_NUMBERS"
           python scripts/lottery_check.py 

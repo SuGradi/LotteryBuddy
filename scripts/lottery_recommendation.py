@@ -88,19 +88,32 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
     }
     
     # 保存到环境变量
-    os.environ['RECOMMENDED_NUMBERS'] = json.dumps(data, ensure_ascii=False)
-    print("推荐号码已保存到环境变量")
+    try:
+        json_str = json.dumps(data, ensure_ascii=False)
+        os.environ['RECOMMENDED_NUMBERS'] = json_str
+        print("推荐号码已保存到环境变量")
+        print(f"保存的数据: {json_str}")
+    except Exception as e:
+        print(f"保存推荐号码时出错: {str(e)}")
 
 def get_recommended_numbers(lottery_type):
     """获取今日推荐号码"""
     # 从环境变量获取
     if 'RECOMMENDED_NUMBERS' in os.environ:
         try:
-            data = json.loads(os.environ['RECOMMENDED_NUMBERS'])
+            json_str = os.environ['RECOMMENDED_NUMBERS']
+            print(f"从环境变量读取的数据: {json_str}")
+            data = json.loads(json_str)
             if data['lottery_type'] == lottery_type:
                 return data['numbers'], data['analysis']
-        except json.JSONDecodeError:
-            print("环境变量中的推荐号码格式错误")
+            else:
+                print(f"彩票类型不匹配: 期望 {lottery_type}, 实际 {data['lottery_type']}")
+        except json.JSONDecodeError as e:
+            print(f"环境变量中的推荐号码格式错误: {str(e)}")
+        except Exception as e:
+            print(f"读取推荐号码时出错: {str(e)}")
+    else:
+        print("环境变量中未找到推荐号码")
     
     return None, None
 
