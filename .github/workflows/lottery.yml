@@ -1,0 +1,66 @@
+name: Lottery Bot
+
+on:
+  schedule:
+    - cron: '0 10 * * *'  # 每天早上10点运行推荐
+    - cron: '0 21 * * *'  # 每天晚上9点运行开奖检查
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  recommend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run recommendation
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: |
+          python scripts/lottery_recommendation.py
+          
+      - name: Save recommended numbers
+        id: save_numbers
+        run: |
+          if [ -f "data/recommended_numbers_$(date +%Y-%m).json" ]; then
+            RECOMMENDED_NUMBERS=$(cat data/recommended_numbers_$(date +%Y-%m).json)
+            echo "RECOMMENDED_NUMBERS<<EOF" >> $GITHUB_ENV
+            echo "$RECOMMENDED_NUMBERS" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+
+  check:
+    needs: recommend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run lottery check
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          RECOMMENDED_NUMBERS: ${{ needs.recommend.outputs.RECOMMENDED_NUMBERS }}
+        run: |
+          python scripts/lottery_check.py 

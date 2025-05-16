@@ -78,7 +78,7 @@ def send_email(subject, content):
         print(f"邮件发送失败: {str(e)}")
 
 def save_recommended_numbers(lottery_type, numbers, analysis):
-    """保存推荐号码到文件"""
+    """保存推荐号码到文件和环境变量"""
     today = datetime.now()
     month = today.strftime('%Y-%m')
     data = {
@@ -88,10 +88,13 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
         'analysis': analysis
     }
     
+    # 保存到环境变量
+    os.environ['RECOMMENDED_NUMBERS'] = json.dumps(data, ensure_ascii=False)
+    
     # 确保data目录存在
     os.makedirs('data', exist_ok=True)
     
-    # 按月保存到文件
+    # 按月保存到文件（作为备份）
     filename = f'data/recommended_numbers_{month}.json'
     
     # 读取现有数据（如果存在）
@@ -114,6 +117,17 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
 def get_recommended_numbers(lottery_type):
     """获取今日推荐号码"""
     today = datetime.now()
+    
+    # 首先尝试从环境变量获取
+    if 'RECOMMENDED_NUMBERS' in os.environ:
+        try:
+            data = json.loads(os.environ['RECOMMENDED_NUMBERS'])
+            if data['lottery_type'] == lottery_type:
+                return data['numbers'], data['analysis']
+        except json.JSONDecodeError:
+            print("环境变量中的推荐号码格式错误")
+    
+    # 如果环境变量中没有，尝试从文件读取
     month = today.strftime('%Y-%m')
     filename = f'data/recommended_numbers_{month}.json'
     
