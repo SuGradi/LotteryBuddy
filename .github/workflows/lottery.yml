@@ -1,50 +1,59 @@
-name: Lottery Recommendation and Check
+name: 彩票推荐和开奖通知
 
 on:
   schedule:
-    # 每天早上9点运行推荐程序
-    - cron: '0 1 * * *'  # UTC时间1点，即北京时间9点
-    # 每天晚上21点运行开奖检查
-    - cron: '0 13 * * *'  # UTC时间13点，即北京时间21点
-  workflow_dispatch:  # 允许手动触发
+    # 每天中午12点运行推荐号码任务
+    - cron: '0 4 * * *'  # UTC时间4点，对应北京时间12点
+    # 每天晚上10点运行开奖查询任务
+    - cron: '14 14 * * *'  # UTC时间14点14分，对应北京时间22点14分
+  # 添加手动触发
+  workflow_dispatch:
+    inputs:
+      action_type:
+        description: '选择要执行的操作'
+        required: true
+        default: 'recommend'
+        type: choice
+        options:
+          - recommend
+          - check
 
 jobs:
   lottery:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests beautifulsoup4
-        
-    - name: Set up environment variables
-      env:
-        EMAIL_USER: ${{ secrets.EMAIL_USER }}
-        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-        GITHUB_TOKEN: ${{ secrets.LOTTERY_TOKEN }}
-        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-        GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
-      run: |
-        echo "EMAIL_USER=$EMAIL_USER" >> $GITHUB_ENV
-        echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> $GITHUB_ENV
-        echo "RECIPIENT_EMAIL=$RECIPIENT_EMAIL" >> $GITHUB_ENV
-        echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> $GITHUB_ENV
-        echo "GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
-        echo "GITHUB_REPOSITORY_NAME=$GITHUB_REPOSITORY_NAME" >> $GITHUB_ENV
-        
-    - name: Run lottery program
-      run: |
-        if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "0 1 * * *" ]]; then
-          python scripts/lottery_recommendation.py
-        elif [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "0 13 * * *" ]]; then
-          python scripts/lottery_check.py
-        fi 
+      - uses: actions/checkout@v3
+      
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 python-dotenv
+          
+      - name: 设置环境变量
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          GITHUB_TOKEN: ${{ secrets.LOTTERY_TOKEN }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          echo "EMAIL_USER=$EMAIL_USER" >> $GITHUB_ENV
+          echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> $GITHUB_ENV
+          echo "RECIPIENT_EMAIL=$RECIPIENT_EMAIL" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=$GITHUB_REPOSITORY_NAME" >> $GITHUB_ENV
+          
+      - name: 运行彩票脚本
+        run: |
+          if [ "${{ github.event.schedule }}" == "0 4 * * *" ] || [ "${{ github.event.inputs.action_type }}" == "recommend" ]; then
+            python scripts/lottery_recommendation.py
+          else
+            python scripts/lottery_check.py
+          fi 
