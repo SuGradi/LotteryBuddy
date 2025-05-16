@@ -1,121 +1,44 @@
-name: Lottery Bot
+name: Lottery Recommendation and Check
 
 on:
   schedule:
-    - cron: '0 10 * * *'  # 每天早上10点运行推荐
-    - cron: '0 21 * * *'  # 每天晚上9点运行开奖检查
+    # 每天早上9点运行推荐程序
+    - cron: '0 1 * * *'  # UTC时间1点，即北京时间9点
+    # 每天晚上21点运行开奖检查
+    - cron: '0 13 * * *'  # UTC时间13点，即北京时间21点
   workflow_dispatch:  # 允许手动触发
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
-  recommend:
+  lottery:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-          cache: 'pip'
-          
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          
-      - name: Run recommendation
-        id: save_numbers
-        env:
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-        run: |
-          # 运行推荐程序并捕获输出
-          echo "开始运行推荐程序..."
-          output=$(python scripts/lottery_recommendation.py)
-          echo "程序输出:"
-          echo "$output"
-          
-          # 检查环境变量是否存在
-          echo "检查环境变量..."
-          if [ -n "$RECOMMENDED_NUMBERS" ]; then
-            echo "找到环境变量 RECOMMENDED_NUMBERS"
-            echo "变量内容: $RECOMMENDED_NUMBERS"
-            # 保存到文件
-            echo "$RECOMMENDED_NUMBERS" > recommended_numbers.json
-            echo "已保存到文件"
-            # 显示文件内容
-            echo "文件内容:"
-            cat recommended_numbers.json
-          else
-            echo "错误: RECOMMENDED_NUMBERS 为空"
-            echo "当前环境变量列表:"
-            env | sort
-            exit 1
-          fi
-          
-      - name: Upload recommended numbers
-        uses: actions/upload-artifact@v4
-        with:
-          name: recommended-numbers
-          path: recommended_numbers.json
-          retention-days: 1
-          if-no-files-found: error
-
-  check:
-    needs: recommend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-          cache: 'pip'
-          
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          
-      - name: Download recommended numbers
-        id: download
-        uses: actions/download-artifact@v4
-        with:
-          name: recommended-numbers
-          path: .
-          
-      - name: Run lottery check
-        env:
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-        run: |
-          # 读取推荐号码
-          if [ -f "recommended_numbers.json" ]; then
-            RECOMMENDED_NUMBERS=$(cat recommended_numbers.json)
-            echo "RECOMMENDED_NUMBERS=$RECOMMENDED_NUMBERS" >> $GITHUB_ENV
-            echo "已从文件读取推荐号码"
-            echo "文件内容:"
-            cat recommended_numbers.json
-          else
-            echo "错误: 找不到推荐号码文件"
-            ls -la
-            exit 1
-          fi
-          
-          # 打印环境变量内容以便调试
-          echo "检查任务中的环境变量:"
-          echo "RECOMMENDED_NUMBERS: $RECOMMENDED_NUMBERS"
-          if [ -z "$RECOMMENDED_NUMBERS" ]; then
-            echo "错误: RECOMMENDED_NUMBERS 为空"
-            echo "当前环境变量列表:"
-            env | sort
-            exit 1
-          fi
-          python scripts/lottery_check.py 
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests beautifulsoup4
+        
+    - name: Set up environment variables
+      env:
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+      run: |
+        echo "EMAIL_USER=$EMAIL_USER" >> $GITHUB_ENV
+        echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> $GITHUB_ENV
+        echo "RECIPIENT_EMAIL=$RECIPIENT_EMAIL" >> $GITHUB_ENV
+        
+    - name: Run lottery program
+      run: |
+        if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "0 1 * * *" ]]; then
+          python scripts/lottery_recommendation.py
+        elif [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" == "0 13 * * *" ]]; then
+          python scripts/lottery_check.py
+        fi 
