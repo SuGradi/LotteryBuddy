@@ -91,11 +91,15 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
     try:
         # 确保JSON字符串格式正确
         json_str = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+        # 使用print输出，让GitHub Actions捕获
+        print(f"::set-output name=RECOMMENDED_NUMBERS::{json_str}")
+        # 同时设置环境变量
         os.environ['RECOMMENDED_NUMBERS'] = json_str
         print("推荐号码已保存到环境变量")
         print(f"保存的数据: {json_str}")
     except Exception as e:
         print(f"保存推荐号码时出错: {str(e)}")
+        raise  # 重新抛出异常，确保工作流失败
 
 def get_recommended_numbers(lottery_type):
     """获取今日推荐号码"""

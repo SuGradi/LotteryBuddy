@@ -37,8 +37,8 @@ jobs:
           
           # 检查环境变量是否存在
           if [ -n "$RECOMMENDED_NUMBERS" ]; then
-            # 使用JSON格式保存
-            echo "numbers={\"data\":$RECOMMENDED_NUMBERS}" >> $GITHUB_OUTPUT
+            # 直接保存推荐号码
+            echo "numbers=$RECOMMENDED_NUMBERS" >> $GITHUB_OUTPUT
           else
             echo "Error: RECOMMENDED_NUMBERS is empty"
             exit 1
@@ -65,7 +65,7 @@ jobs:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-          RECOMMENDED_NUMBERS: ${{ fromJSON(needs.recommend.outputs.recommended_numbers).data }}
+          RECOMMENDED_NUMBERS: ${{ needs.recommend.outputs.recommended_numbers }}
         run: |
           # 打印环境变量内容以便调试
           echo "Recommended numbers: $RECOMMENDED_NUMBERS"
