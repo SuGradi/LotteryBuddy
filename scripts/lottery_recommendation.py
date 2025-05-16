@@ -101,8 +101,22 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
     # 获取现有文件内容
     headers = {
         'Authorization': f'token {github_token}',
-        'Accept': 'application/vnd.github.v3+json'
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'LotteryBuddy'
     }
+    
+    # 首先检查token权限
+    try:
+        response = requests.get(
+            f'https://api.github.com/user',
+            headers=headers
+        )
+        if response.status_code != 200:
+            print(f"Token权限检查失败: {response.status_code} - {response.text}")
+            return
+    except Exception as e:
+        print(f"Token权限检查时发生错误: {str(e)}")
+        return
     
     # 获取文件SHA（如果存在）
     try:
@@ -132,7 +146,8 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
     # 提交到GitHub
     commit_data = {
         'message': f'Update lottery numbers for {today.strftime("%Y-%m-%d")}',
-        'content': content_base64
+        'content': content_base64,
+        'branch': 'master'  # 指定分支
     }
     
     if sha:
@@ -148,6 +163,10 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
             print(f"推荐号码已保存到GitHub仓库: {file_path}")
         else:
             print(f"保存到GitHub失败: {response.status_code} - {response.text}")
+            print("请确保Token具有以下权限：")
+            print("1. repo 权限")
+            print("2. workflow 权限")
+            print("3. 仓库的写入权限")
     except Exception as e:
         print(f"保存到GitHub时发生错误: {str(e)}")
 
