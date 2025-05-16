@@ -30,10 +30,16 @@ jobs:
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        GITHUB_TOKEN: ${{ secrets.LOTTERY_TOKEN }}
+        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}
       run: |
         echo "EMAIL_USER=$EMAIL_USER" >> $GITHUB_ENV
         echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> $GITHUB_ENV
         echo "RECIPIENT_EMAIL=$RECIPIENT_EMAIL" >> $GITHUB_ENV
+        echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> $GITHUB_ENV
+        echo "GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
+        echo "GITHUB_REPOSITORY_NAME=$GITHUB_REPOSITORY_NAME" >> $GITHUB_ENV
         
     - name: Run lottery program
       run: |
