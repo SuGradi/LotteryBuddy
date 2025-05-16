@@ -48,6 +48,9 @@ jobs:
             # 保存到文件
             echo "$RECOMMENDED_NUMBERS" > recommended_numbers.json
             echo "已保存到文件"
+            # 显示文件内容
+            echo "文件内容:"
+            cat recommended_numbers.json
           else
             echo "错误: RECOMMENDED_NUMBERS 为空"
             echo "当前环境变量列表:"
@@ -61,6 +64,7 @@ jobs:
           name: recommended-numbers
           path: recommended_numbers.json
           retention-days: 1
+          if-no-files-found: error
 
   check:
     needs: recommend
@@ -80,6 +84,7 @@ jobs:
           pip install -r requirements.txt
           
       - name: Download recommended numbers
+        id: download
         uses: actions/download-artifact@v4
         with:
           name: recommended-numbers
@@ -90,15 +95,17 @@ jobs:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-          RECOMMENDED_NUMBERS: ${{ steps.download.outputs.RECOMMENDED_NUMBERS }}
         run: |
           # 读取推荐号码
           if [ -f "recommended_numbers.json" ]; then
             RECOMMENDED_NUMBERS=$(cat recommended_numbers.json)
             echo "RECOMMENDED_NUMBERS=$RECOMMENDED_NUMBERS" >> $GITHUB_ENV
             echo "已从文件读取推荐号码"
+            echo "文件内容:"
+            cat recommended_numbers.json
           else
             echo "错误: 找不到推荐号码文件"
+            ls -la
             exit 1
           fi
           
