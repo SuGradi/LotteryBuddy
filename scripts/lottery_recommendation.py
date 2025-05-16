@@ -96,7 +96,7 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
         if github_output:
             try:
                 with open(github_output, 'a') as f:
-                    f.write(f"RECOMMENDED_NUMBERS={json_str}\n")
+                    f.write(f"numbers={json_str}\n")
                 print("推荐号码已保存到GitHub输出")
             except Exception as e:
                 print(f"保存到GitHub输出时出错: {str(e)}")

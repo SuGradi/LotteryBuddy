@@ -86,6 +86,8 @@ jobs:
           echo "RECOMMENDED_NUMBERS: $RECOMMENDED_NUMBERS"
           if [ -z "$RECOMMENDED_NUMBERS" ]; then
             echo "错误: RECOMMENDED_NUMBERS 为空"
+            echo "当前环境变量列表:"
+            env | sort
             exit 1
           fi
           # 设置环境变量
