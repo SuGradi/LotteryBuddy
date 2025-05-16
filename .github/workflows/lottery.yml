@@ -88,4 +88,6 @@ jobs:
             echo "错误: RECOMMENDED_NUMBERS 为空"
             exit 1
           fi
+          # 设置环境变量
+          export RECOMMENDED_NUMBERS="$RECOMMENDED_NUMBERS"
           python scripts/lottery_check.py 
