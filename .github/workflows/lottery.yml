@@ -6,18 +6,23 @@ on:
     - cron: '0 21 * * *'  # 每天晚上9点运行开奖检查
   workflow_dispatch:  # 允许手动触发
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   recommend:
     runs-on: ubuntu-latest
     outputs:
       recommended_numbers: ${{ steps.save_numbers.outputs.numbers }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+          cache: 'pip'
           
       - name: Install dependencies
         run: |
@@ -37,7 +42,7 @@ jobs:
           
           # 检查环境变量是否存在
           if [ -n "$RECOMMENDED_NUMBERS" ]; then
-            # 直接保存推荐号码
+            # 使用新的环境文件方式保存输出
             echo "numbers=$RECOMMENDED_NUMBERS" >> $GITHUB_OUTPUT
           else
             echo "Error: RECOMMENDED_NUMBERS is empty"
@@ -48,12 +53,13 @@ jobs:
     needs: recommend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+          cache: 'pip'
           
       - name: Install dependencies
         run: |

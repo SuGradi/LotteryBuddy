@@ -87,16 +87,25 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
         'analysis': analysis
     }
     
-    # 保存到环境变量
     try:
         # 确保JSON字符串格式正确
         json_str = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
-        # 使用print输出，让GitHub Actions捕获
-        print(f"::set-output name=RECOMMENDED_NUMBERS::{json_str}")
-        # 同时设置环境变量
+        
+        # 获取GitHub输出文件路径
+        github_output = os.environ.get('GITHUB_OUTPUT')
+        if github_output:
+            try:
+                with open(github_output, 'a') as f:
+                    f.write(f"RECOMMENDED_NUMBERS={json_str}\n")
+                print("推荐号码已保存到GitHub输出")
+            except Exception as e:
+                print(f"保存到GitHub输出时出错: {str(e)}")
+        
+        # 设置环境变量
         os.environ['RECOMMENDED_NUMBERS'] = json_str
         print("推荐号码已保存到环境变量")
         print(f"保存的数据: {json_str}")
+        
     except Exception as e:
         print(f"保存推荐号码时出错: {str(e)}")
         raise  # 重新抛出异常，确保工作流失败
@@ -116,6 +125,12 @@ def get_recommended_numbers(lottery_type):
                 # 如果直接解析失败，尝试移除可能的引号
                 json_str = json_str.strip('"\'')
                 data = json.loads(json_str)
+            
+            # 验证数据完整性
+            required_fields = ['date', 'lottery_type', 'numbers', 'analysis']
+            if not all(field in data for field in required_fields):
+                print(f"数据不完整，缺少必要字段: {required_fields}")
+                return None, None
             
             if data['lottery_type'] == lottery_type:
                 return data['numbers'], data['analysis']
