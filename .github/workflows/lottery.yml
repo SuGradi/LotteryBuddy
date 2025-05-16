@@ -74,12 +74,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
+      - name: Set environment variable
+        run: |
+          echo "RECOMMENDED_NUMBERS=${{ needs.recommend.outputs.recommended_numbers }}" >> $GITHUB_ENV
+          echo "设置环境变量 RECOMMENDED_NUMBERS"
+          echo "变量内容: ${{ needs.recommend.outputs.recommended_numbers }}"
+          
       - name: Run lottery check
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-          RECOMMENDED_NUMBERS: ${{ needs.recommend.outputs.recommended_numbers }}
         run: |
           # 打印环境变量内容以便调试
           echo "检查任务中的环境变量:"
@@ -90,6 +95,4 @@ jobs:
             env | sort
             exit 1
           fi
-          # 设置环境变量
-          echo "RECOMMENDED_NUMBERS=$RECOMMENDED_NUMBERS" >> $GITHUB_ENV
           python scripts/lottery_check.py 
