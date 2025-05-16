@@ -2,8 +2,8 @@ name: 彩票推荐和开奖通知
 
 on:
   schedule:
-    # 每天中午12点运行推荐号码任务
-    - cron: '0 4 * * *'  # UTC时间4点，对应北京时间12点
+    # 每天上午10点运行推荐号码任务
+    - cron: '0 2 * * *'  # UTC时间2点，对应北京时间10点
     # 每天晚上10点运行开奖查询任务
     - cron: '14 14 * * *'  # UTC时间14点14分，对应北京时间22点14分
   # 添加手动触发
@@ -50,9 +50,19 @@ jobs:
           echo "GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER" >> $GITHUB_ENV
           echo "GITHUB_REPOSITORY_NAME=$GITHUB_REPOSITORY_NAME" >> $GITHUB_ENV
           
-      - name: 运行彩票脚本
+      - name: 检查是否为周五
+        id: check_friday
         run: |
-          if [ "${{ github.event.schedule }}" == "0 4 * * *" ] || [ "${{ github.event.inputs.action_type }}" == "recommend" ]; then
+          if [ "$(date +%u)" = "5" ]; then
+            echo "is_friday=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_friday=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: 运行彩票脚本
+        if: steps.check_friday.outputs.is_friday != 'true'
+        run: |
+          if [ "${{ github.event.schedule }}" == "0 2 * * *" ] || [ "${{ github.event.inputs.action_type }}" == "recommend" ]; then
             python scripts/lottery_recommendation.py
           else
             python scripts/lottery_check.py
