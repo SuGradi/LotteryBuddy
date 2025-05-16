@@ -9,6 +9,8 @@ on:
 jobs:
   recommend:
     runs-on: ubuntu-latest
+    outputs:
+      recommended_numbers: ${{ steps.save_numbers.outputs.numbers }}
     steps:
       - uses: actions/checkout@v2
       
@@ -34,10 +36,8 @@ jobs:
         id: save_numbers
         run: |
           if [ -f "data/recommended_numbers_$(date +%Y-%m).json" ]; then
-            RECOMMENDED_NUMBERS=$(cat data/recommended_numbers_$(date +%Y-%m).json)
-            echo "RECOMMENDED_NUMBERS<<EOF" >> $GITHUB_ENV
-            echo "$RECOMMENDED_NUMBERS" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
+            numbers=$(cat data/recommended_numbers_$(date +%Y-%m).json)
+            echo "numbers=$numbers" >> $GITHUB_OUTPUT
           fi
 
   check:
@@ -61,6 +61,6 @@ jobs:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-          RECOMMENDED_NUMBERS: ${{ needs.recommend.outputs.RECOMMENDED_NUMBERS }}
+          RECOMMENDED_NUMBERS: ${{ needs.recommend.outputs.recommended_numbers }}
         run: |
           python scripts/lottery_check.py 
