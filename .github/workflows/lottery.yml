@@ -31,8 +31,18 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
         run: |
-          python scripts/lottery_recommendation.py
-          echo "numbers='$RECOMMENDED_NUMBERS'" >> $GITHUB_OUTPUT
+          # 运行推荐程序并捕获输出
+          output=$(python scripts/lottery_recommendation.py)
+          echo "$output"
+          
+          # 检查环境变量是否存在
+          if [ -n "$RECOMMENDED_NUMBERS" ]; then
+            # 使用JSON格式保存
+            echo "numbers={\"data\":$RECOMMENDED_NUMBERS}" >> $GITHUB_OUTPUT
+          else
+            echo "Error: RECOMMENDED_NUMBERS is empty"
+            exit 1
+          fi
 
   check:
     needs: recommend
@@ -55,7 +65,8 @@ jobs:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-          RECOMMENDED_NUMBERS: ${{ needs.recommend.outputs.recommended_numbers }}
+          RECOMMENDED_NUMBERS: ${{ fromJSON(needs.recommend.outputs.recommended_numbers).data }}
         run: |
+          # 打印环境变量内容以便调试
           echo "Recommended numbers: $RECOMMENDED_NUMBERS"
           python scripts/lottery_check.py 
