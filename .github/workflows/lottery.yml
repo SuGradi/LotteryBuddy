@@ -13,8 +13,6 @@ permissions:
 jobs:
   recommend:
     runs-on: ubuntu-latest
-    outputs:
-      recommended_numbers: ${{ steps.save_numbers.outputs.numbers }}
     steps:
       - uses: actions/checkout@v4
       
@@ -47,15 +45,22 @@ jobs:
           if [ -n "$RECOMMENDED_NUMBERS" ]; then
             echo "找到环境变量 RECOMMENDED_NUMBERS"
             echo "变量内容: $RECOMMENDED_NUMBERS"
-            # 使用新的环境文件方式保存输出
-            echo "numbers=$RECOMMENDED_NUMBERS" >> $GITHUB_OUTPUT
-            echo "已保存到 GitHub 输出"
+            # 保存到文件
+            echo "$RECOMMENDED_NUMBERS" > recommended_numbers.json
+            echo "已保存到文件"
           else
             echo "错误: RECOMMENDED_NUMBERS 为空"
             echo "当前环境变量列表:"
             env | sort
             exit 1
           fi
+          
+      - name: Upload recommended numbers
+        uses: actions/upload-artifact@v4
+        with:
+          name: recommended-numbers
+          path: recommended_numbers.json
+          retention-days: 1
 
   check:
     needs: recommend
@@ -74,18 +79,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
-      - name: Set environment variable
-        run: |
-          echo "RECOMMENDED_NUMBERS=${{ needs.recommend.outputs.recommended_numbers }}" >> $GITHUB_ENV
-          echo "设置环境变量 RECOMMENDED_NUMBERS"
-          echo "变量内容: ${{ needs.recommend.outputs.recommended_numbers }}"
+      - name: Download recommended numbers
+        uses: actions/download-artifact@v4
+        with:
+          name: recommended-numbers
+          path: .
           
       - name: Run lottery check
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          RECOMMENDED_NUMBERS: ${{ steps.download.outputs.RECOMMENDED_NUMBERS }}
         run: |
+          # 读取推荐号码
+          if [ -f "recommended_numbers.json" ]; then
+            RECOMMENDED_NUMBERS=$(cat recommended_numbers.json)
+            echo "RECOMMENDED_NUMBERS=$RECOMMENDED_NUMBERS" >> $GITHUB_ENV
+            echo "已从文件读取推荐号码"
+          else
+            echo "错误: 找不到推荐号码文件"
+            exit 1
+          fi
+          
           # 打印环境变量内容以便调试
           echo "检查任务中的环境变量:"
           echo "RECOMMENDED_NUMBERS: $RECOMMENDED_NUMBERS"
