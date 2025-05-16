@@ -106,11 +106,6 @@ def save_recommended_numbers(lottery_type, numbers, analysis):
         print("推荐号码已保存到环境变量")
         print(f"保存的数据: {json_str}")
         
-        # 在GitHub Actions中，我们需要使用特殊语法设置输出
-        if 'GITHUB_ACTIONS' in os.environ:
-            print(f"::set-output name=RECOMMENDED_NUMBERS::{json_str}")
-            print("已使用GitHub Actions输出语法设置变量")
-        
     except Exception as e:
         print(f"保存推荐号码时出错: {str(e)}")
         raise  # 重新抛出异常，确保工作流失败
